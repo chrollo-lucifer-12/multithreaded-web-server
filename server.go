@@ -2,14 +2,37 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"net"
+	"net/http"
 	"os"
+	"strings"
 	"syscall"
 )
 
 const max_clients = 100
 
 var clientSem = Init(max_clients)
+var cache CacheStore = &Cache{}
+
+func fetchFromOrigin(url string) string {
+	fmt.Println("fetching from origin ", url)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		fmt.Println("Error fetching URL:", err)
+		return "Error fetching URL"
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading response body:", err)
+		return "Error reading response body"
+	}
+
+	return string(body)
+}
 
 func handleClient(clientFD int) {
 	clientSem.Wait()
@@ -24,11 +47,24 @@ func handleClient(clientFD int) {
 		return
 	}
 
-	fmt.Println(string(buf[:n]))
-	syscall.Write(clientFD, []byte("hello from the server"))
+	requested_url := strings.TrimSpace(string(buf[:n]))
+
+	found_cache := cache.find(requested_url)
+
+	if found_cache != nil {
+		fmt.Println("cache hit ", found_cache.head.data)
+		syscall.Write(clientFD, []byte(found_cache.head.data))
+	} else {
+		fmt.Println("cache miss")
+		response := fetchFromOrigin(requested_url)
+		syscall.Write(clientFD, []byte(response))
+		cache.add_cache_element(response, len(response), requested_url)
+	}
+
 }
 
 func RunMultiThreadedServer(port int) {
+
 	proxyFd, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_STREAM, 0)
 	if err != nil {
 		fmt.Println("socket creation failed ", err)

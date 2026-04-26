@@ -25,8 +25,12 @@ type Cache struct {
 	mu         sync.Mutex
 }
 
-func (c *Cache) find(url string) *Cache
+func (c *Cache) find(url string) *Cache {
+	return nil
+}
 
-func (c *Cache) add_cache_element(data string, len int, url string) int
+func (c *Cache) add_cache_element(data string, len int, url string) int {
+	return 0
+}
 
-func (c *Cache) remove_cache_element(url string)
+func (c *Cache) remove_cache_element(url string) { return }
