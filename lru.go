@@ -20,8 +20,9 @@ type CacheElement struct {
 }
 
 type Cache struct {
-	head *CacheElement
-	mu   sync.Mutex
+	head       *CacheElement
+	cache_size int
+	mu         sync.Mutex
 }
 
 func (c *Cache) find(url string) *Cache
