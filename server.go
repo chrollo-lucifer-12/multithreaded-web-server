@@ -52,8 +52,8 @@ func handleClient(clientFD int) {
 	found_cache := cache.find(requested_url)
 
 	if found_cache != nil {
-		fmt.Println("cache hit ", found_cache.head.data)
-		syscall.Write(clientFD, []byte(found_cache.head.data))
+		fmt.Println("cache hit ", found_cache.data)
+		syscall.Write(clientFD, []byte(found_cache.data))
 	} else {
 		fmt.Println("cache miss")
 		response := fetchFromOrigin(requested_url)
